@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.example</groupId>
+  <artifactId>ios_graalvm</artifactId>
+  <version>1.0-SNAPSHOT</version>
+
+  <properties>
+    <graalvm.sdk.version>22.0.0</graalvm.sdk.version>
+    <graalvm.maven.version>21.2.0</graalvm.maven.version>
+
+    <graalvm.libs.version>21.2</graalvm.libs.version>
+    <graalvm.main.class>main.java.Test</graalvm.main.class>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.source>11</maven.compiler.source>
+    <maven.compiler.target>11</maven.compiler.target>
+
+    <ios.xcode.platform>iphoneos</ios.xcode.platform>
+    <ios.arch>arm64-ios</ios.arch>
+    <ios.target.arch>arm64</ios.target.arch>
+    <ios.graal.platform>IOS_AARCH64</ios.graal.platform>
+    <ios.temp.path>tmp${ios.arch}</ios.temp.path>
+
+    <capcache.version>22.0</capcache.version>
+    <cap.cache.dir>${project.basedir}/capcache-${capcache.version}</cap.cache.dir>
+
+
+    <graal.libs.dir>${project.basedir}/graal-svm-ios-libs</graal.libs.dir>
+    <ios.graal.static.lib>${graal.libs.dir}/graal-svm-arm64-ios-r.a</ios.graal.static.lib>
+    <ios.jdk.static.lib>${graal.libs.dir}/jdk-arm64-ios-r.a</ios.jdk.static.lib>
+
+    <link.ios.script>${project.basedir}/linkIos.sh</link.ios.script>
+    <ios.min.version>11</ios.min.version>
+
+
+    <graalvm.image.name>Test</graalvm.image.name>
+    <graalvm.main.class>Test</graalvm.main.class>
+  </properties>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.graalvm.sdk</groupId>
+      <artifactId>graal-sdk</artifactId>
+      <version>${graalvm.sdk.version}</version>
+      <scope>provided</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>com.googlecode.maven-download-plugin</groupId>
+      <artifactId>download-maven-plugin</artifactId>
+      <version>1.6.0</version>
+      <scope>provided</scope>
+    </dependency>
+
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.8</source>
+          <target>1.8</target>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>graal-ios</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-dependency-plugin</artifactId>
+            <version>3.1.2</version>
+            <executions>
+              <execution>
+                <id>unpack-graal-svm-ios</id>
+                <phase>generate-resources</phase>
+                <goals>
+                  <goal>unpack-dependencies</goal>
+                </goals>
+                <configuration>
+                  <includeGroupIds>delightex</includeGroupIds>
+                  <includeArtifactIds>graal-svm-ios</includeArtifactIds>
+                  <outputDirectory>${graal.libs.dir}</outputDirectory>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.graalvm.nativeimage</groupId>
+            <artifactId>native-image-maven-plugin</artifactId>
+            <version>${graalvm.maven.version}</version>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>native-image</goal>
+                </goals>
+                <phase>package</phase>
+                <configuration>
+                  <skip>false</skip>
+                  <imageName>${graalvm.image.name}</imageName>
+                  <!-- # https://chriswhocodes.com/graalvm_native_image_ce_jdk11_options.html -->
+                  <buildArgs>
+                    --no-fallback
+                    --verbose
+                    -H:DashboardDump=dashboard
+                    -H:+DashboardAll
+                    --enable-https
+                    -Djdk.internal.lambda.eagerlyInitialize=false
+                    -H:+SharedLibrary
+                    -H:CompilerBackend=llvm
+                    --features=org.graalvm.home.HomeFinderFeature
+                    -H:+ExitAfterRelocatableImageWrite
+                    -H:+ReportExceptionStackTraces
+                    -H:-DeadlockWatchdogExitOnTimeout
+                    -H:DeadlockWatchdogInterval=0
+                    -H:TempDirectory=${ios.temp.path}
+                    -H:-SpawnIsolates
+                    -H:PageSize=16384
+                    -H:+UseCAPCache
+                    -H:CAPCacheDir=${cap.cache.dir}
+                    -H:LLVMMaxFunctionsPerBatch=0
+                    -Dsvm.targetName=iOS
+                    -Dsvm.targetArch=${ios.target.arch}
+                    -Dsvm.platform=org.graalvm.nativeimage.Platform$${ios.graal.platform}
+                    ${graalvm.main.class}
+                  </buildArgs>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.6.0</version>
+            <executions>
+              <execution>
+                <id>delete-old-SVM</id>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <phase>prepare-package</phase>
+                <configuration>
+                  <executable>/bin/rm</executable>
+                  <arguments>
+                    <argument>-rf</argument>
+                    <argument>${project.build.directory}/${ios.temp.path}</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+    <profile>
+      <id>link-ios</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>1.6.0</version>
+            <executions>
+              <execution>
+                <id>link-IOS</id>
+                <goals>
+                  <goal>exec</goal>
+                </goals>
+                <phase>package</phase>
+                <configuration>
+                  <executable>/bin/bash</executable>
+                  <arguments>
+                    <argument>${link.ios.script}</argument>
+                    <argument>${graalvm.main.class}</argument>
+                    <argument>${graalvm.main.class}.o</argument>
+                    <argument>${ios.xcode.platform}</argument>
+                    <argument>${ios.arch}</argument>
+                    <argument>${ios.target.arch}</argument>
+                    <argument>${ios.min.version}</argument>
+                    <argument>${ios.graal.static.lib}</argument>
+                    <argument>${ios.jdk.static.lib}</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+
+
+  </profiles>
+
+</project>
