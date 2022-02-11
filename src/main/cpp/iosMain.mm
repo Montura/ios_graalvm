@@ -2,7 +2,7 @@
 #include <sys/sysctl.h>
 #include <errno.h>
 
-int run_main(int paramArgc, char** paramArgv);
+extern "C" int run_main(int paramArgc, char** paramArgv);
 
 static uint32_t cpu_has(const char* optional) {
   uint32_t val = 0;
