@@ -4,7 +4,7 @@ This sample demonstrates a problem with running the Java code (processed by graa
 
 * On ARMv8.3-A works fine (Apple A12)
 
-[This commit in graal v22.0](https://github.com/oracle/graal/commit/8dcf51febac87c9cc60d320b56c1d7cce9e8121b#diff-e20cc7c705399bb4add81b0214fd61b4d7fcc8321666b139d16f6268d58b97e5R571) cause native-image crash on ARMv8 (64-bit):
+[This commit in graal v22.0](https://github.com/oracle/graal/commit/8dcf51febac87c9cc60d320b56c1d7cce9e8121b#diff-e20cc7c705399bb4add81b0214fd61b4d7fcc8321666b139d16f6268d58b97e5R571) has to be upated to prevent native-image crash on ARMv8 (64-bit):
   * `Fatal error: Current target does not support the following CPU features that are required by the image: [FP, ASIMD]`
    
 I dumped CPU options info for AppleA7 CPU
