@@ -38,7 +38,7 @@ public class Test {
 ## Steps to reproduce
 1. Download https://github.com/graalvm/graalvm-ce-builds/releases/download/vm-22.0.0.2/graalvm-ce-java11-darwin-amd64-22.0.0.2.tar.gz
 2. Unpack the archive and set `JAVA_HOME` to `graalvm-ce-java11-darwin-amd64-22.0.0.2/Contents/Home`
-3. Run ```mvn clean package -Pgraal-ios```
+3. Run ```mvn clean package -Pgraal-ios``` from repo directory
 4. Open `ios-graalvm.xcodeproj`
   * scheme `ios-graalvm-22.0.1` works fine and prints: ```Hello from Java```
   * scheme `ios-graalvm-22.0` crashes: 
