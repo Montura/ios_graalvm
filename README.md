@@ -27,7 +27,7 @@ public class Test {
 ```
 2. Process it with [native-image-maven-plugin](https://mvnrepository.com/artifact/org.graalvm.nativeimage/native-image-maven-plugin)
   * got `Java.o` and `llvm.o`
-3. Link `java.o` + `llvm.o` + `jdk-static-lib.a` + `graal-svm-static-lib`
+3. Link `java.o` + `llvm.o` + `jdk-static-lib.a` + `graal-svm-static-lib.a`
 4. Run on AppleA7
 
 
